@@ -1,0 +1,124 @@
+/* style.css */
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+header { 
+    background: #008080; 
+    color: white; 
+    padding: 10px 15px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    flex-wrap: wrap;
+    gap: 10px;
+}
+header h1 { margin: 0; font-size: 1.5rem; flex-shrink: 0; }
+header nav { display: flex; gap: 15px; }
+header nav a { color: white; text-decoration: none; font-size: 0.9rem; font-weight: 500; }
+header nav a:hover { text-decoration: underline; }
+@media (max-width: 600px) {
+    header { justify-content: center; text-align: center; }
+    header nav { width: 100%; justify-content: center; order: 3; }
+}
+.btn { padding: 10px 20px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; }
+.btn-primary { background: #ff6f61; color: white; }
+.btn-google { background: #4285F4; color: white; margin-top: 10px; width: 100%; }
+.btn-secondary { background: #ddd; color: #333; }
+
+/* Product Grid */
+.product-grid { 
+    display: grid; 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 12px; 
+    margin-top: 20px; 
+}
+@media (min-width: 768px) {
+    .product-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+}
+.card { 
+    background: white; 
+    padding: 10px; 
+    border-radius: 20px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+    text-align: left;
+}
+.card img { 
+    width: 100%; 
+    aspect-ratio: 1/1; 
+    object-fit: cover; 
+    border-radius: 15px; 
+}
+.card-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 5px;
+}
+.card h3 { 
+    font-size: 0.9rem; 
+    margin: 5px 0 2px; 
+    color: #333;
+}
+.price { 
+    color: #ff9f1c; 
+    font-weight: bold; 
+    font-size: 0.85rem; 
+    margin: 0; 
+}
+.add-btn {
+    background: #ff9f1c;
+    color: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgba(255, 159, 28, 0.3);
+    transition: transform 0.1s;
+}
+.add-btn:active {
+    transform: scale(0.9);
+}
+
+/* Forms & Modals */
+.auth-box, .checkout-box { background: white; max-width: 400px; margin: 50px auto; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+input, select, textarea { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; box-sizing: border-box; border-radius: 5px; }
+.qr-container { display: flex; gap: 10px; justify-content: center; margin: 15px 0; }
+.qr-box { border: 1px solid #ddd; padding: 5px; text-align: center; font-size: 0.8em; }
+.qr-box img { width: 80px; height: 80px; }
+
+/* Admin Specific */
+/* Category Scroll */
+.category-scroll {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+    -webkit-overflow-scrolling: touch;
+}
+.category-scroll::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+.category-scroll .btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    z-index: 1000;
+    overflow-y: auto;
+}

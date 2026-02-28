@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TI Shopping - Admin</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <h1>Admin Dashboard</h1>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="admin.html">Admin</a>
+                <a href="driver.html">Driver</a>
+            </nav>
+        </div>
+    </header>
+    <div class="container">
+        
+        <div class="admin-panel">
+            <h2>Add New Product (ပစ္စည်းအသစ်တင်ရန်)</h2>
+            <form id="add-product-form">
+                <input type="text" id="p-name" placeholder="Product Name" required>
+                <textarea id="p-desc" placeholder="Product Description (ပစ္စည်းအကြောင်းအရာ)" rows="3" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; font-family: inherit;"></textarea>
+                <input type="number" id="p-price" placeholder="Price (Ks)" required>
+                <input type="number" id="p-stock" placeholder="Stock Quantity (လက်ကျန်အရေအတွက်)" value="10" required>
+                
+                <div style="margin: 10px 0; text-align: left;">
+                    <label style="font-size: 0.8em; color: #666; font-weight: bold;">Product Image (ပုံတင်ရန် - Max 10MB)</label>
+                    <div id="image-preview-container" style="margin: 10px 0; display: none;">
+                        <img id="image-preview" src="" style="max-width: 150px; border-radius: 8px; border: 1px solid #ddd;">
+                    </div>
+                    <input type="file" id="p-file" accept="image/*" onchange="previewImage(this)" style="margin-bottom: 5px;">
+                    <p style="font-size: 0.7em; color: #999; margin: 0;">သို့မဟုတ် Image URL ထည့်ပါ (Optional)</p>
+                    <input type="text" id="p-img" placeholder="Image URL (Link)">
+                </div>
+
+                <select id="p-cat">
+                    <option value="clothing">အဝတ်အထည် (Clothing)</option>
+                    <option value="food">အစားအစာ (Food)</option>
+                    <option value="household">အိမ်သုံးပစ္စည်း (Household)</option>
+                    <option value="jewelry">လက်ဝတ်ရတနာ (Jewelry)</option>
+                </select>
+                <button type="submit" class="btn btn-primary">Upload Product</button>
+            </form>
+        </div>
+
+        <div class="admin-panel">
+            <h2>Manage Products (ပစ္စည်းများ စီမံရန်)</h2>
+            <div id="admin-product-list" class="product-grid">
+                <!-- Products will load here with delete buttons -->
+            </div>
+        </div>
+
+        <div class="admin-panel" style="margin-top: 40px;">
+            <h2>Incoming Orders</h2>
+            <div id="order-list" class="product-grid"></div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { db } from './scripts/firebase-config.js';
+        import { collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, enableIndexedDbPersistence, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        // Enable Offline Persistence
+        enableIndexedDbPersistence(db).catch(() => {});
+
+        // Load products for management
+        const adminProductList = document.getElementById('admin-product-list');
+        const productQuery = query(collection(db, "products")); // Removed orderBy to avoid index issues
+        
+        onSnapshot(productQuery, (snapshot) => {
+            console.log("Admin: Received products snapshot, size:", snapshot.size);
+            adminProductList.innerHTML = '';
+            if (snapshot.empty) {
+                adminProductList.innerHTML = '<p style="grid-column: 1/-1; padding: 20px; text-align: center; color: #666;">No products found in database.</p>';
+                return;
+            }
+            snapshot.forEach(productDoc => {
+                const data = productDoc.data();
+                const item = document.createElement('div');
+                item.className = 'card';
+                item.style.padding = '10px';
+                item.innerHTML = `
+                    <div style="width: 100%; height: 100px; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; margin-bottom: 5px;">
+                        <img src="${data.imageUrl || data.image}" style="width: 100%; height: 100%; object-fit: contain; padding: 2px;" onerror="this.src='https://picsum.photos/100/100?text=Error'">
+                    </div>
+                    <h4 style="margin: 5px 0; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${data.name}</h4>
+                    <p style="font-size: 0.7em; color: #666; margin: 0;">Stock: ${data.stockQuantity || 0}</p>
+                    <p style="font-size: 0.7em; color: #ff5a5f; margin: 0;">Ks ${data.price}</p>
+                    <button onclick="deleteProduct('${productDoc.id}')" style="background: #ff5a5f; color: white; border: none; padding: 4px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 5px; font-size: 0.7em;">Delete</button>
+                `;
+                adminProductList.appendChild(item);
+            });
+        });
+
+        // Image Preview Function
+        window.previewImage = (input) => {
+            const preview = document.getElementById('image-preview');
+            const container = document.getElementById('image-preview-container');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.src = e.target.result;
+                    container.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                container.style.display = 'none';
+            }
+        };
+
+        window.deleteProduct = async (id) => {
+            if (confirm("Are you sure you want to delete this product?")) {
+                try {
+                    await deleteDoc(doc(db, "products", id));
+                    alert("Product deleted!");
+                } catch (e) {
+                    alert("Error deleting: " + e.message);
+                }
+            }
+        };
+
+        // Add Product
+        document.getElementById('add-product-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerText;
+            
+            const name = document.getElementById('p-name').value;
+            const description = document.getElementById('p-desc').value;
+            const priceValue = document.getElementById('p-price').value;
+            const stockValue = document.getElementById('p-stock').value;
+            
+            const price = parseFloat(priceValue) || 0;
+            const stockQuantity = parseInt(stockValue) || 0;
+            
+            const category = document.getElementById('p-cat').value;
+            const imageUrlInput = document.getElementById('p-img').value;
+            const imageFile = document.getElementById('p-file').files[0];
+
+            if (!name) return alert("ကျေးဇူးပြု၍ ပစ္စည်းအမည် ထည့်ပေးပါ");
+            if (!imageUrlInput && !imageFile) {
+                return alert("ကျေးဇူးပြု၍ ပုံ (သို့မဟုတ်) Link တစ်ခုခု ထည့်ပေးပါ");
+            }
+
+            try {
+                btn.disabled = true;
+                btn.innerText = "Processing...";
+
+                let finalImageUrl = imageUrlInput;
+
+                // If a file is selected, upload it to the server first
+                if (imageFile) {
+                    if (imageFile.size > 10 * 1024 * 1024) {
+                        throw new Error("ပုံ Size အရမ်းကြီးနေပါတယ် (10MB အောက်ပဲ ဖြစ်ရပါမယ်)");
+                    }
+
+                    btn.innerText = "Uploading Image... (ပုံတင်နေပါသည်)";
+                    const formData = new FormData();
+                    formData.append('productImage', imageFile);
+                    
+                    const controller = new AbortController();
+                    const id = setTimeout(() => controller.abort(), 120000); // 120 seconds for very slow internet
+
+                    try {
+                        const uploadRes = await fetch('/api/upload-product', {
+                            method: 'POST',
+                            body: formData,
+                            signal: controller.signal
+                        });
+                        clearTimeout(id);
+                        
+                        if (uploadRes.ok) {
+                            const uploadData = await uploadRes.json();
+                            if (uploadData.status === 'success') {
+                                finalImageUrl = uploadData.imageUrl;
+                            } else {
+                                throw new Error(uploadData.message || "Upload failed");
+                            }
+                        } else {
+                            const errorData = await uploadRes.json().catch(() => ({}));
+                            throw new Error(errorData.message || "Server error during upload");
+                        }
+                    } catch (e) {
+                        console.error("Image upload error:", e);
+                        if (e.name === 'AbortError') {
+                            throw new Error("ပုံတင်တာ ကြာလွန်းလို့ ရပ်သွားပါပြီ။ အင်တာနက်လိုင်း ပြန်စစ်ပေးပါခင်ဗျာ။");
+                        }
+                        throw e;
+                    }
+                }
+                
+                btn.innerText = "Saving to Firebase...";
+                
+                // Add to Firestore with a manual timeout for slow internet
+                const saveToFirestore = async () => {
+                    await addDoc(collection(db, "products"), { 
+                        name, 
+                        description: description || "",
+                        price: price, 
+                        stockQuantity: stockQuantity,
+                        category: category || "other", 
+                        imageUrl: finalImageUrl || "",
+                        createdAt: serverTimestamp()
+                    });
+                };
+
+                const timeout = (ms) => new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error("Firebase connection timed out. Please check your internet.")), ms)
+                );
+
+                try {
+                    // Wait for save or 30s timeout
+                    await Promise.race([saveToFirestore(), timeout(30000)]);
+                    alert("Product Added Successfully! (ပစ္စည်းတင်ပြီးပါပြီ)");
+                    document.getElementById('add-product-form').reset();
+                } catch (firestoreErr) {
+                    console.error("Firestore Error:", firestoreErr);
+                    alert("Firebase Error: " + firestoreErr.message + "\n\nအင်တာနက်လိုင်းမကောင်း၍ ဖြစ်နိုင်ပါသည်။ ခဏနေမှ ပြန်တင်ကြည့်ပါ သို့မဟုတ် ပုံ Link ကို သုံးကြည့်ပါခင်ဗျာ။");
+                }
+            } catch (err) { 
+                console.error("Full Upload Error:", err);
+                alert("Error: " + err.message); 
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        };
+
+        // Load Orders Live
+        onSnapshot(collection(db, "orders"), (snapshot) => {
+            const list = document.getElementById('order-list');
+            list.innerHTML = '';
+            if (snapshot.empty) {
+                list.innerHTML = '<p>No orders yet.</p>';
+                return;
+            }
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                list.innerHTML += `
+                    <div class="card" style="text-align:left;">
+                        <h3>Order for: ${data.customer.name}</h3>
+                        <p>Phone: ${data.customer.phone}</p>
+                        <p>Total: ${data.total} Ks</p>
+                        <p>Status: <b style="color:${data.status === 'pending' ? 'orange' : 'green'}">${data.status.toUpperCase()}</b></p>
+                        <p style="font-size:0.8em; color:#666;">${data.timestamp}</p>
+                    </div>
+                `;
+            });
+        });
+    </script>
+    <!-- Footer -->
+    <footer style="background: #f4f4f4; color: #666; padding: 20px; margin-top: 50px; text-align: center; font-size: 0.8em; border-top: 1px solid #ddd;">
+        <p>© 2024 TL Shopping Admin Panel. All rights reserved.</p>
+    </footer>
+</body>
+</html>

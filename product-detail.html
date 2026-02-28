@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details - TL Shopping</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .detail-container {
+            max-width: 1000px;
+            margin: 100px auto 50px;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .detail-image {
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fff;
+            border: 1px solid #eee;
+        }
+        .detail-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: contain;
+        }
+        .detail-info h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .detail-info .price {
+            font-size: 1.5rem;
+            color: #ff5a5f;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .detail-info .description {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            white-space: pre-wrap;
+        }
+        .detail-info .meta {
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            color: #888;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #ff5a5f;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        @media (max-width: 768px) {
+            .detail-container {
+                grid-template-columns: 1fr;
+                margin-top: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header (Simplified) -->
+    <header style="position: fixed; top: 0; width: 100%; background: white; padding: 15px 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 1000;">
+        <div class="container" style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto;">
+            <a href="index.html" style="text-decoration: none; color: #ff5a5f; font-size: 1.5rem; font-weight: bold;">TL Shopping</a>
+            <a href="index.html" class="btn btn-secondary">Back to Home</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="product-detail-content">
+            <p style="text-align: center; padding: 100px;">Loading product details...</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer style="background: #333; color: white; padding: 40px 20px; margin-top: 50px; text-align: left;">
+        <div class="container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto;">
+            <div>
+                <h3 style="color: #ff5a5f; margin-bottom: 15px;">TL Shopping</h3>
+                <p style="font-size: 0.9em; line-height: 1.6; color: #ccc;">အရည်အသွေးကောင်းမွန်သော ပစ္စည်းများကို ဈေးနှုန်းချိုသာစွာဖြင့် တစ်နေရာတည်းမှာ ဝယ်ယူရရှိနိုင်ပါသည်။</p>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 15px;">Contact Us</h4>
+                <p style="font-size: 0.85em; color: #ccc; margin: 5px 0;">📞 09-xxxxxxxxx</p>
+                <p style="font-size: 0.85em; color: #ccc; margin: 5px 0;">📧 info@tlshopping.com</p>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 15px;">Follow Us</h4>
+                <div style="display: flex; gap: 15px;">
+                    <a href="#" style="color: white; text-decoration: none; font-size: 1.5em;"><i class="fab fa-facebook"></i></a>
+                    <a href="#" style="color: white; text-decoration: none; font-size: 1.5em;"><i class="fab fa-facebook-messenger"></i></a>
+                </div>
+            </div>
+        </div>
+        <div style="border-top: 1px solid #444; margin-top: 30px; padding-top: 20px; text-align: center; font-size: 0.8em; color: #888;">
+            <p>© 2024 TL Shopping. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { db } from './scripts/firebase-config.js';
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        async function loadProductDetail() {
+            const params = new URLSearchParams(window.location.search);
+            const productId = params.get('id');
+            const content = document.getElementById('product-detail-content');
+
+            if (!productId) {
+                content.innerHTML = '<p style="text-align: center; padding: 100px;">Product not found.</p>';
+                return;
+            }
+
+            try {
+                const docRef = doc(db, "products", productId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const imageUrl = data.imageUrl || data.image || 'https://picsum.photos/600/600?text=No+Image';
+                    
+                    content.innerHTML = `
+                        <div class="detail-container">
+                            <div class="detail-image">
+                                <img src="${imageUrl}" alt="${data.name}" onerror="this.src='https://picsum.photos/600/600?text=Image+Error'" referrerPolicy="no-referrer">
+                            </div>
+                            <div class="detail-info">
+                                <a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Products</a>
+                                <h1>${data.name}</h1>
+                                <p class="meta">Category: ${data.category || 'Other'} | Stock: ${data.stockQuantity || 0}</p>
+                                <p class="price">Ks ${data.price}</p>
+                                <div class="description">
+                                    <h3>Product Description</h3>
+                                    <p>${data.description || 'No description available.'}</p>
+                                </div>
+                                <button class="btn btn-primary" style="width: 100%; padding: 15px; font-size: 1.1rem;" onclick="window.addToCartAndRedirect('${productId}', '${data.name}', ${data.price})">
+                                    Add to Cart & Checkout
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    content.innerHTML = '<p style="text-align: center; padding: 100px;">Product does not exist.</p>';
+                }
+            } catch (error) {
+                console.error("Error fetching product:", error);
+                content.innerHTML = '<p style="text-align: center; padding: 100px; color: red;">Error loading product details.</p>';
+            }
+        }
+
+        // Helper to add to cart from detail page
+        window.addToCartAndRedirect = (id, name, price) => {
+            // Since we don't have the full app.js context here easily for the 'cart' variable,
+            // we can either use localStorage or just redirect to home and let them add there.
+            // For simplicity, let's just alert and redirect to home for now, or we can implement a simple local cart.
+            alert("Added to cart! Redirecting to checkout...");
+            // In a real app, you'd update the cart state. 
+            // For this demo, we'll just go back to home.
+            window.location.href = 'index.html';
+        };
+
+        window.onload = loadProductDetail;
+    </script>
+</body>
+</html>

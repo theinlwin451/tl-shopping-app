@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TI Shopping - Driver</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <h1>Driver App</h1>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="admin.html">Admin</a>
+                <a href="driver.html">Driver</a>
+            </nav>
+        </div>
+    </header>
+    <div class="container">
+        <h2>Jobs Available (Pending Deliveries)</h2>
+        <div id="delivery-list" class="product-grid"></div>
+    </div>
+
+    <script type="module">
+        import { db } from './scripts/firebase-config.js';
+        import { collection, query, where, onSnapshot, updateDoc, doc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        // Load Pending Orders
+        const q = query(collection(db, "orders"), where("status", "==", "pending"));
+        onSnapshot(q, (snapshot) => {
+            const list = document.getElementById('delivery-list');
+            list.innerHTML = '';
+            if (snapshot.empty) {
+                list.innerHTML = '<p>No pending deliveries.</p>';
+                return;
+            }
+            snapshot.forEach(d => {
+                const data = d.data();
+                list.innerHTML += `
+                    <div class="card" style="text-align:left;">
+                        <h3>Location: ${data.customer.address}</h3>
+                        <p><b>Customer:</b> ${data.customer.name}</p>
+                        <p><b>Phone:</b> ${data.customer.phone}</p>
+                        <p><b>Total:</b> ${data.total} Ks</p>
+                        <button class="btn btn-primary" style="width:100%;" onclick="markDelivered('${d.id}')">Mark Delivered</button>
+                    </div>
+                `;
+            });
+        });
+
+        window.markDelivered = async (id) => {
+            try {
+                await updateDoc(doc(db, "orders", id), { status: "delivered" });
+                alert("Order marked as delivered!");
+            } catch (err) {
+                alert("Error: " + err.message);
+            }
+        };
+    </script>
+</body>
+</html>

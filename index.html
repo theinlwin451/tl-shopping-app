@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TI Shopping - Customer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header style="position: relative; z-index: 500;">
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <h1>TI Shopping</h1>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="admin.html">Admin</a>
+                <a href="driver.html">Driver</a>
+            </nav>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
+            <span id="user-display" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; font-size: 0.85em; color: #eee; display: none;">Guest</span>
+            <button id="login-btn" class="btn btn-secondary" style="white-space: nowrap;" onclick="openLoginModal()">Login</button>
+            <button id="logout-btn" class="btn btn-secondary" style="white-space: nowrap; display: none; background: #444; color: white;" onclick="window.logout()">Logout</button>
+            <button class="btn btn-primary" style="white-space: nowrap;" onclick="openCartModal()">
+                Cart (<span id="cart-count">0</span>)
+            </button>
+        </div>
+    </header>
+
+    <script>
+        function openLoginModal() {
+            const modal = document.getElementById('login-modal-overlay');
+            if (modal) modal.style.display = 'block';
+        }
+        function openCartModal() {
+            if (window.checkLogin && !window.checkLogin()) return;
+            const modal = document.getElementById('checkout-modal-overlay');
+            if (modal) modal.style.display = 'block';
+        }
+    </script>
+
+<div class="container">
+    <!-- Filter Buttons -->
+    <div class="category-scroll">
+        <button class="btn btn-secondary" onclick="loadProducts('product-list', 'all')">အားလုံး</button>
+        <button class="btn btn-secondary" onclick="loadProducts('product-list', 'clothing')">အဝတ်အထည်</button>
+        <button class="btn btn-secondary" onclick="loadProducts('product-list', 'food')">အစားအစာ</button>
+        <button class="btn btn-secondary" onclick="loadProducts('product-list', 'household')">အိမ်သုံးပစ္စည်း</button>
+        <button class="btn btn-secondary" onclick="loadProducts('product-list', 'jewelry')">လက်ဝတ်ရတနာ</button>
+    </div>
+
+    <div id="product-list" class="product-grid">
+        <!-- Products will load here -->
+    </div>
+</div>
+
+<!-- Login Modal -->
+<div id="login-modal-overlay" class="modal-overlay">
+    <div class="auth-box">
+        <h2 id="auth-title">Sign In</h2>
+        <input type="email" id="login-email" placeholder="Email">
+        <input type="password" id="login-pass" placeholder="Password">
+        
+        <div id="login-actions">
+            <button id="login-submit-btn" class="btn btn-primary" style="width:100%;" onclick="window.emailLogin(document.getElementById('login-email').value, document.getElementById('login-pass').value)">Login</button>
+            <p style="margin: 10px 0; font-size: 0.8em; color: #666;">Don't have an account? <a href="#" onclick="toggleAuthMode('signup')" style="color: #ff5a5f; font-weight: bold;">Sign Up (အကောင့်သစ်ဖွင့်ရန်)</a></p>
+        </div>
+
+        <div id="signup-actions" style="display: none;">
+            <button id="signup-submit-btn" class="btn btn-primary" style="width:100%; background: #28a745;" onclick="window.emailSignUp(document.getElementById('login-email').value, document.getElementById('login-pass').value)">Create Account</button>
+            <p style="margin: 10px 0; font-size: 0.8em; color: #666;">Already have an account? <a href="#" onclick="toggleAuthMode('login')" style="color: #ff5a5f; font-weight: bold;">Sign In (အကောင့်ရှိပြီးသားဝင်ရန်)</a></p>
+        </div>
+
+        <div style="margin: 15px 0; border-top: 1px solid #eee; padding-top: 15px;">
+            <button class="btn btn-google" onclick="window.googleLogin()">Sign in with Google</button>
+        </div>
+        
+        <button class="btn btn-secondary" style="width:100%; margin-top:10px;" onclick="document.getElementById('login-modal-overlay').style.display='none'">Close</button>
+    </div>
+</div>
+
+<script>
+    function toggleAuthMode(mode) {
+        const title = document.getElementById('auth-title');
+        const loginActions = document.getElementById('login-actions');
+        const signupActions = document.getElementById('signup-actions');
+        
+        if (mode === 'signup') {
+            title.innerText = 'Sign Up';
+            loginActions.style.display = 'none';
+            signupActions.style.display = 'block';
+        } else {
+            title.innerText = 'Sign In';
+            loginActions.style.display = 'block';
+            signupActions.style.display = 'none';
+        }
+    }
+</script>
+
+<!-- Checkout Modal -->
+<div id="checkout-modal-overlay" class="modal-overlay">
+    <div class="checkout-box">
+        <h2>Checkout / ငွေရှင်းရန်</h2>
+        <form onsubmit="window.submitOrder(event)">
+            <input type="text" id="cust-name" placeholder="အမည် (Name)" required>
+            <input type="text" id="cust-phone" placeholder="ဖုန်းနံပါတ် (Phone)" required>
+            <textarea id="cust-address" placeholder="နေရပ်လိပ်စာ (Address)" required></textarea>
+            
+            <h3>Payment (MMK)</h3>
+            <div class="qr-container">
+                <div class="qr-box"><img src="https://picsum.photos/200/200?random=1" alt="KPay"><br>KPay</div>
+                <div class="qr-box"><img src="https://picsum.photos/200/200?random=2" alt="Wave"><br>Wave</div>
+            </div>
+            
+            <label>ငွေလွှဲစလစ် (Upload Slip)</label>
+            <input type="file" id="payment-slip" accept="image/*" required>
+            
+            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:10px;">Confirm Order</button>
+            <button type="button" class="btn btn-secondary" style="width:100%; margin-top:10px;" onclick="document.getElementById('checkout-modal-overlay').style.display='none'">Cancel</button>
+        </form>
+    </div>
+</div>
+
+    <!-- Footer -->
+    <footer style="background: #333; color: white; padding: 40px 20px; margin-top: 50px; text-align: left;">
+        <div class="container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto;">
+            <div>
+                <h3 style="color: #ff5a5f; margin-bottom: 15px;">TL Shopping</h3>
+                <p style="font-size: 0.9em; line-height: 1.6; color: #ccc;">အရည်အသွေးကောင်းမွန်သော ပစ္စည်းများကို ဈေးနှုန်းချိုသာစွာဖြင့် တစ်နေရာတည်းမှာ ဝယ်ယူရရှိနိုင်ပါသည်။</p>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 15px;">Contact Us</h4>
+                <p style="font-size: 0.85em; color: #ccc; margin: 5px 0;">📞 09-xxxxxxxxx</p>
+                <p style="font-size: 0.85em; color: #ccc; margin: 5px 0;">📧 info@tlshopping.com</p>
+                <p style="font-size: 0.85em; color: #ccc; margin: 5px 0;">📍 Yangon, Myanmar</p>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 15px;">Follow Us</h4>
+                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                    <a href="#" style="color: white; text-decoration: none; font-size: 1.5em;"><i class="fab fa-facebook"></i></a>
+                    <a href="#" style="color: white; text-decoration: none; font-size: 1.5em;"><i class="fab fa-facebook-messenger"></i></a>
+                    <a href="#" style="color: white; text-decoration: none; font-size: 1.5em;"><i class="fab fa-telegram"></i></a>
+                </div>
+                <p style="font-size: 0.8em; color: #888;">Payments: KBZPay, WaveMoney</p>
+            </div>
+        </div>
+        <div style="border-top: 1px solid #444; margin-top: 30px; padding-top: 20px; text-align: center; font-size: 0.8em; color: #888;">
+            <p>© 2024 TL Shopping. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<script type="module">
+    import { loadProducts, submitOrder, emailLogin, emailSignUp, googleLogin, logout, checkLogin } from './scripts/app.js';
+    window.loadProducts = loadProducts;
+    window.submitOrder = submitOrder;
+    window.emailLogin = emailLogin;
+    window.emailSignUp = emailSignUp;
+    window.googleLogin = googleLogin;
+    window.logout = logout;
+    window.checkLogin = checkLogin;
+    window.onload = () => loadProducts('product-list');
+</script>
+
+</body>
+</html>
